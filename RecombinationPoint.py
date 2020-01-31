@@ -1,4 +1,4 @@
-import queue
+import queue, copy
 
 def read_data_as_chromosomes(file_name:str):
     f = open(file_name, 'r')
@@ -24,7 +24,7 @@ def find_recombination_point(data, mosaic_relationship):
     child_data = build_processed_chromosome_data(child)
     check_queue = queue.LifoQueue()
 
-    while len(child) > 0:
+    while len(child) > 0 or check_queue.qsize() > 0:
 
         # implement queue to track combinations from parent1 and parent2 ranges
         # and do a while loop to reduce length of child and parents for each iterative check
@@ -33,13 +33,41 @@ def find_recombination_point(data, mosaic_relationship):
         for range in parent_ranges:
             check_queue.put(range)
 
+def recursive_recombination_check(parent1, parent1_data, parent2, parent2_data, child, child_data):
+    d_child = child[:]
+    d_child_data = copy.deepcopy(child_data)
+    d_parent1 = parent1[:]
+    d_parent1_data = copy.deepcopy(parent1_data)
+    d_parent2 = parent2[:]
+    d_parent2_data = copy.deepcopy(parent2_data)
+    first_child_char = d_child[0]
+    parent_ranges = compare_xdiff(first_child_char, d_parent1_data, d_parent2_data, d_child_data)
+    check_queue = queue.LifoQueue()
+    possible_recombination_points = []
+    for parent_range in parent_ranges:
+        check_queue.put(parent_range)
+    while check_queue.qsize() > 0:
+        parent_range = check_queue.get()
+        target_parent = (d_parent1, d_parent1_data) if parent_range[1] == 1 else (d_parent2, d_parent2_data)
+        counter = 0
+        while len(d_child) > 0 and (target_parent[0][parent_range[0][2] + 1 + counter] == child_data[parent_range[0][2] - parent_range[0][1] + 1 + counter]):
+            counter += 1
+        # figure out how to append (basically we are only tracking which indexes of child belong to which parent)
+        possible_recombination_points.append((parent_range[0][2] + counter, parent_range[1]))
+        # splice away parent data, child data, parent and child using string1[:4] + string1[7:]
+        possible_recombination_points += recursive_recombination_check(d_parent1, d_parent1_data, d_parent2, d_parent2_data, d_child, d_child_data)
+
+
+
+
+
 
 def compare_xdiff(char, parent1_data, parent2_data, child_data):
     parent1_xdiff = parent1_data[char+"Diff"]
     parent2_xdiff = parent2_data[char+"Diff"]
     child_xdiff = child_data[char+"Diff"]
     parent1_ranges = []
-    parent2_ranges  = []
+    parent2_ranges = []
     child_counter = 0
     current_range = []
 
@@ -75,7 +103,7 @@ def compare_xdiff(char, parent1_data, parent2_data, child_data):
             child_counter = 0
 
     parent_ranges = parent1_ranges + parent2_ranges
-    parent_ranges.sort(key= lambda x: x[0][0])
+    parent_ranges.sort(key=lambda x: x[0][0])
     print(parent_ranges)
     return parent_ranges
 
@@ -83,12 +111,12 @@ def compare_xdiff(char, parent1_data, parent2_data, child_data):
 
 
 def build_processed_chromosome_data(chromosome):
-    chromosome_data = {"T": [], "A": [], "C":[], "G":[], "TDiff": [], "ADiff": [], "CDiff": [], "GDiff": []}
+    chromosome_data = {"T": [], "A": [], "C": [], "G": [], "TDiff": [], "ADiff": [], "CDiff": [], "GDiff": []}
     for i in range(len(chromosome)):
         chromosome_data[chromosome[i]].append(i)
-    for type in ["T", "A", "C", "G"]:
-        for i in range(len(chromosome_data[type]) - 1):
-            chromosome_data[type + "Diff"].append(chromosome_data[type][i + 1] - chromosome_data[type][i])
+    for chromosome_type in ["T", "A", "C", "G"]:
+        for i in range(len(chromosome_data[chromosome_type]) - 1):
+            chromosome_data[chromosome_type + "Diff"].append(chromosome_data[chromosome_type][i + 1] - chromosome_data[chromosome_type][i])
     return chromosome_data
 
 if __name__ == "__main__":
