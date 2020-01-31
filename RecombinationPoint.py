@@ -53,8 +53,11 @@ def recursive_recombination_check(parent1, parent1_data, parent2, parent2_data, 
         while len(d_child) > 0 and (target_parent[0][parent_range[0][2] + 1 + counter] == child_data[parent_range[0][2] - parent_range[0][1] + 1 + counter]):
             counter += 1
         # figure out how to append (basically we are only tracking which indexes of child belong to which parent)
+
         possible_recombination_points.append((parent_range[0][2] + counter, parent_range[1]))
+
         # splice away parent data, child data, parent and child using string1[:4] + string1[7:]
+
         possible_recombination_points += recursive_recombination_check(d_parent1, d_parent1_data, d_parent2, d_parent2_data, d_child, d_child_data)
 
 
