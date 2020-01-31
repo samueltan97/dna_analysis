@@ -21,8 +21,11 @@ def find_recombination_point(data, mosaic_relationship):
     child = data[mosaic_relationship[1]][:]
     child_data = build_processed_chromosome_data(child)
 
+    # implement stack to track combinations from parent1 and parent2 ranges
+    # and do a while loop to reduce length of child for each iterative check
+
     first_child_char = child[0]
-    parent1_range, parent2_range = compare_xdiff(first_child_char, parent1_data, parent2_data)
+    parent1_range, parent2_range = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
 
 def compare_xdiff(char, parent1_data, parent2_data, child_data):
     parent1_xdiff = parent1_data[char+"Diff"]
@@ -35,33 +38,37 @@ def compare_xdiff(char, parent1_data, parent2_data, child_data):
 
     for i in range(len(parent1_xdiff)):
         if parent1_xdiff[i] == child_xdiff[child_counter] and len(current_range) == 0:
-            current_range = [0, i, i]
+            current_range = [1, parent1_data[char][i], i]
             child_counter += 1
         elif parent1_xdiff[i] == child_xdiff[child_counter] and len(current_range) > 0:
-            current_range[2] = i
+            current_range[2] = parent1_data[char][i + 1]
             current_range[0] = i - current_range[1]
             child_counter += 1
         else:
-            parent1_range.append(current_range)
+            if len(current_range) > 0 and current_range[0] > 1:
+                parent1_range.append(current_range)
             current_range = []
             child_counter = 0
 
-    current_range = 0
+    current_range = []
     child_counter = 0
 
     for i in range(len(parent2_xdiff)):
         if parent2_xdiff[i] == child_xdiff[child_counter] and len(current_range) == 0:
-            current_range = [0, i, i]
+            current_range = [1, parent2_data[char][i], i]
             child_counter += 1
         elif parent2_xdiff[i] == child_xdiff[child_counter] and len(current_range) > 0:
-            current_range[2] = i
+            current_range[2] = parent2_data[char][i + 1]
             current_range[0] = i - current_range[1]
             child_counter += 1
         else:
-            parent2_range.append(current_range)
+            if len(current_range) > 0 and current_range[0] > 1:
+                parent2_range.append(current_range)
             current_range = []
             child_counter = 0
 
+    print(parent1_range)
+    print(parent2_range)
     parent1_range.sort(key= lambda x: x[0])
     parent2_range.sort(key= lambda x: x[0])
     return parent1_range, parent2_range
