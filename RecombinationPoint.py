@@ -1,3 +1,5 @@
+import queue
+
 def read_data_as_chromosomes(file_name:str):
     f = open(file_name, 'r')
     content = f.read()
@@ -20,19 +22,23 @@ def find_recombination_point(data, mosaic_relationship):
     parent2_data = build_processed_chromosome_data(parent2)
     child = data[mosaic_relationship[1]][:]
     child_data = build_processed_chromosome_data(child)
+    check_queue = queue.LifoQueue()
 
-    # implement stack to track combinations from parent1 and parent2 ranges
-    # and do a while loop to reduce length of child for each iterative check
+    while len(child) > 0:
 
-    first_child_char = child[0]
-    parent1_range, parent2_range = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
+        # implement queue to track combinations from parent1 and parent2 ranges
+        # and do a while loop to reduce length of child and parents for each iterative check
+        first_child_char = child[0]
+        parent1_ranges, parent2_ranges = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
+
+
 
 def compare_xdiff(char, parent1_data, parent2_data, child_data):
     parent1_xdiff = parent1_data[char+"Diff"]
     parent2_xdiff = parent2_data[char+"Diff"]
     child_xdiff = child_data[char+"Diff"]
-    parent1_range = []
-    parent2_range = []
+    parent1_ranges = []
+    parent2_ranges  = []
     child_counter = 0
     current_range = []
 
@@ -46,7 +52,7 @@ def compare_xdiff(char, parent1_data, parent2_data, child_data):
             child_counter += 1
         else:
             if len(current_range) > 0 and current_range[0] > 1:
-                parent1_range.append(current_range)
+                parent1_ranges.append((current_range, 1))
             current_range = []
             child_counter = 0
 
@@ -63,15 +69,14 @@ def compare_xdiff(char, parent1_data, parent2_data, child_data):
             child_counter += 1
         else:
             if len(current_range) > 0 and current_range[0] > 1:
-                parent2_range.append(current_range)
+                parent2_ranges.append((current_range, 2))
             current_range = []
             child_counter = 0
 
-    print(parent1_range)
-    print(parent2_range)
-    parent1_range.sort(key= lambda x: x[0])
-    parent2_range.sort(key= lambda x: x[0])
-    return parent1_range, parent2_range
+    parent_ranges = parent1_ranges + parent2_ranges
+    parent_ranges.sort(key= lambda x: x[0][0])
+    print(parent_ranges)
+    return parent_ranges
 
 
 
