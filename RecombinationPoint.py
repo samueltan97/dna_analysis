@@ -29,8 +29,9 @@ def find_recombination_point(data, mosaic_relationship):
         # implement queue to track combinations from parent1 and parent2 ranges
         # and do a while loop to reduce length of child and parents for each iterative check
         first_child_char = child[0]
-        parent1_ranges, parent2_ranges = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
-
+        parent_ranges = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
+        for range in parent_ranges:
+            check_queue.put(range)
 
 
 def compare_xdiff(char, parent1_data, parent2_data, child_data):
