@@ -22,16 +22,7 @@ def find_recombination_point(data, mosaic_relationship):
     parent2_data = build_processed_chromosome_data(parent2)
     child = data[mosaic_relationship[1]][:]
     child_data = build_processed_chromosome_data(child)
-    check_queue = queue.LifoQueue()
-
-    while len(child) > 0 or check_queue.qsize() > 0:
-
-        # implement queue to track combinations from parent1 and parent2 ranges
-        # and do a while loop to reduce length of child and parents for each iterative check
-        first_child_char = child[0]
-        parent_ranges = compare_xdiff(first_child_char, parent1_data, parent2_data, child_data)
-        for range in parent_ranges:
-            check_queue.put(range)
+    recursive_recombination_check(parent1, parent1_data, parent2, parent2_data, child, child_data)
 
 def recursive_recombination_check(parent1, parent1_data, parent2, parent2_data, child, child_data):
     d_child = child[:]
@@ -50,16 +41,33 @@ def recursive_recombination_check(parent1, parent1_data, parent2, parent2_data, 
         parent_range = check_queue.get()
         target_parent = (d_parent1, d_parent1_data) if parent_range[1] == 1 else (d_parent2, d_parent2_data)
         counter = 0
-        while len(d_child) > 0 and (target_parent[0][parent_range[0][2] + 1 + counter] == child_data[parent_range[0][2] - parent_range[0][1] + 1 + counter]):
+        while (target_parent[0][parent_range[0][1] + counter] == d_child[counter]):
+            parent_index = target_parent[1][target_parent[0][parent_range[0][1] + counter]].index(parent_range[0][1] + counter)
+            target_parent[1][target_parent[0][parent_range[0][2] + 1 + counter]].pop(parent_index)
+            d_child_data[d_child[counter]].pop(0)
             counter += 1
         # figure out how to append (basically we are only tracking which indexes of child belong to which parent)
+        for chromosome_diff in ["TDiff", "ADiff", "CDiff", "GDiff"]:
+            d_child_data[chromosome_diff] = []
+            target_parent[1][chromosome_diff] = []
+
+        for chromosome_type in ["T", "A", "C", "G"]:
+            for i in range(len(target_parent[1][chromosome_type]) - 1):
+                target_parent[1][chromosome_type + "Diff"].append(
+                    target_parent[1][chromosome_type][i + 1] - target_parent[1][chromosome_type][i])
+            for i in range(len(d_child_data[chromosome_type]) - 1):
+                d_child_data[chromosome_type + "Diff"].append(
+                    d_child_data[chromosome_type][i + 1] - d_child_data[chromosome_type][i])
 
         possible_recombination_points.append((parent_range[0][2] + counter, parent_range[1]))
-
-        # splice away parent data, child data, parent and child using string1[:4] + string1[7:]
+        if parent_range[1] == 1:
+            d_parent1 = d_parent1[:parent_range[0][1]] + d_parent1[(parent_range[0][1] + counter + 1):]
+        else:
+            d_parent2 = d_parent2[:parent_range[0][1]] + d_parent2[(parent_range[0][1] + counter + 1):]
+        d_child = d_child[counter+1:]
 
         possible_recombination_points += recursive_recombination_check(d_parent1, d_parent1_data, d_parent2, d_parent2_data, d_child, d_child_data)
-
+        return possible_recombination_points
 
 
 
